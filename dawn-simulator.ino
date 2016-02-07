@@ -3,7 +3,7 @@ int green = 10;
 int blue = 11;
 
 int outsideBrightness = A5;
-int lampSwitch = 2;
+
 
 int blueSat = 0;//BlueSaturation
 int redSat = 0;//RedSaturation
@@ -18,17 +18,17 @@ void setup() {
   pinMode(red, OUTPUT);
   pinMode(blue, OUTPUT);
   pinMode(green, OUTPUT);
-  pinMode(offLed,OUTPUT);
+
   Serial.begin(9600);
            
          //test Rouge
-        rgb(2,0,0);
+        rgb(1,0,0);
           delay(250);
          //test green
-          rgb(0,2,0);
+          rgb(0,1,0);
          delay(250);
         //test blue
-         rgb(0,0,2);
+         rgb(0,0,1);
          delay(250);
          rgb(0,0,0);
           rgb(1,1,1);
@@ -85,11 +85,12 @@ int upLight(int value,int factor){
   }else{
     tokenStop=1;//No more light up
   }
+  Serial.println(tokenStop);
   if(value>255){
     //More than 255, make it to 0
     value=255;
   }
-  delay(170);//Eye perception
+  delay(60000);//No needs to be reactive, sun rising is slow
   return value;
 }
 
@@ -101,11 +102,11 @@ int simulatedDawn(){
   redSat=0;
   blueSat=0;
    //Simulated Dawn Warning
-    rgb(0,0,2);
+    rgb(0,0,1);
     delay(1000);
     rgb(0,0,0);
     delay(1000);
-    rgb(0,0,2);
+    rgb(0,0,1);
     delay(1000);
   rgb(1,1,0);
   while(greenSat<170){
