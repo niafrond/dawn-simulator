@@ -11,7 +11,9 @@ int greenSat = 0;//GreenSaturation
 
 bool tokenStop=0; //Stop light change
 int storedBrightness;
-int mode = 2; //0 = eteint;1 = nightLight,2=nightLight+Lumino //Disabled : push button electro magnetic sensible make it unexploitable
+const int threshold = 3;
+int mode = 2; //0 = eteint;1 = nightLight,2=nightLight+Lumino
+int sunRiseFrequency = 360000;//3 minutes
 // the setup routine runs once when you press reset:
 void setup() {
   
@@ -20,25 +22,16 @@ void setup() {
   pinMode(green, OUTPUT);
 
   Serial.begin(9600);
-           
-         //test Rouge
-        rgb(1,0,0);
-          delay(250);
-         //test green
-          rgb(0,1,0);
-         delay(250);
-        //test blue
-         rgb(0,0,1);
-         delay(250);
-         rgb(0,0,0);
+
           rgb(1,1,1);
          delay(250);
 }
 
 void loop() {
-
+  mode=2;
   //While outside light isn(t changing,we put the night light
-  while(readLuminosity()<10){
+  while(readLuminosity()<threshold*10){
+    
      
       nightLight();
       
@@ -66,14 +59,19 @@ void rgb(){
 }
 void nightLight(){
 
-    rgb(0,3,1);
-    delay(100);
+    rgb(0,2,1);
+    delay(60000);
 }
 //We up only if outside if up-ing too
 int upLight(int value,int factor){
 
  int brightness=readLuminosity();
-
+  if(readLuminosity()<=threshold*10){
+    //Night is falling or false punctual light
+    storedBrightness=brightness;
+    mode=1;
+    return 0;
+  }
   if(storedBrightness<=brightness){
     //If outside brightness is growing, light inside up
     storedBrightness=brightness;
@@ -90,11 +88,12 @@ int upLight(int value,int factor){
     //More than 255, make it to 0
     value=255;
   }
-  delay(60000);//No needs to be reactive, sun rising is slow
+ 
+  
   return value;
 }
 
-int simulatedDawn(){
+void simulatedDawn(){
 
   //brightness = 5;//debug
   
@@ -103,60 +102,78 @@ int simulatedDawn(){
   blueSat=0;
    //Simulated Dawn Warning
     rgb(0,0,1);
-    delay(1000);
+    delay(500);
     rgb(0,0,0);
-    delay(1000);
+    delay(500);
     rgb(0,0,1);
-    delay(1000);
+    delay(500);
   rgb(1,1,0);
+  if(mode!=2){
+             return;
+          }
+           while(greenSat<30){
+                if(mode!=2){
+                   return;
+                }
+                greenSat=upLight(greenSat,1);
+    
+              redSat=upLight(redSat,2);
+              rgb();
+              delay(sunRiseFrequency*4);//First rising will be really slow
+           }
   while(greenSat<170){
-
+          if(mode!=2){
+             return;
+          }
 
           greenSat=upLight(greenSat,1);
 
           redSat=upLight(redSat,2);
           rgb();
-         // delay(100);
+          delay(sunRiseFrequency);//No needs to be reactive, sun rising is slow
     }
         
     while(blueSat<202){
           if(mode!=2){
-             return 0;
+             return;
           }
           greenSat=upLight(greenSat,1);
 
          blueSat=upLight(blueSat,1);
           rgb();
-      
+       delay(sunRiseFrequency);//No needs to be reactive, sun rising is slow
     }
 
     while(blueSat<255){
           if(mode!=2){
-             return 0;
+             return;
           }
          blueSat=upLight(blueSat,1);
          redSat=upLight(redSat,1);
           rgb();
-
+ delay(sunRiseFrequency);//No needs to be reactive, sun rising is slow
       
     }
     while(redSat<255){
          if(mode!=2){
-            return 0;
+            return;
           }
          redSat=upLight(redSat,1);
           rgb();
+           delay(sunRiseFrequency);//No needs to be reactive, sun rising is slow
     }
     while(greenSat<255){
          if(mode!=2){
-            return 0;
+            return;
           }
          greenSat=upLight(greenSat,1);
           rgb();
+           delay(sunRiseFrequency);//No needs to be reactive, sun rising is slow
       
     }
     while(mode==2){
       rgb(255,255,255);
+       delay(sunRiseFrequency);//No needs to be reactive, sun rising is slow
   }
 
 }
@@ -165,9 +182,9 @@ int readLuminosity(){
 
   int light=analogRead(outsideBrightness);
  
-  light=light/3; //1024 becomes 255
+  light=light/threshold; //1024 becomes 255
   
-  Serial.println(light*3);
+  Serial.println(light*threshold);
   Serial.println(light);
   
 
@@ -176,3 +193,4 @@ int readLuminosity(){
 //yellow tip
 //  rgb(238,245,37);//more orange => green to 116; lighter => blue to 220
 //
+
